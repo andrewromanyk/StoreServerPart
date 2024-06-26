@@ -31,6 +31,7 @@ public class Processor {
     private Message result  = new Message(1, 1, new byte[0]);
 
     public byte[] process(Message message) throws InterruptedException, UnknownHostException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
+        //System.out.println("Server started processing!");
         Thread headerThread = new Thread(() -> messageHeader(message));
         Thread answerThread = new Thread(() -> {
             try {
@@ -45,6 +46,7 @@ public class Processor {
         answerThread.join();
 
         Encriptor encriptor = new Encriptor();
+        //System.out.println("Server stopped processing!");
         return encriptor.encript(result);
     }
 
@@ -57,7 +59,7 @@ public class Processor {
         String res = handleMessage(message);
         if (res == null) result.setbyteMessage("Ok".getBytes());
         else {
-            System.out.println(Arrays.toString(res.getBytes()));
+            //System.out.println(Arrays.toString(res.getBytes()));
             result.setbyteMessage(res.getBytes());
         }
     }
@@ -70,9 +72,10 @@ public class Processor {
     //table - table to modify
     //info - inf to use
     private String handleMessage(Message message) throws SQLException, JsonProcessingException {
+        //System.out.println("Server started handling!");
         int type = message.type();
         byte[] info = message.getByteMessage();
-        System.out.println("string info: " + new String(info));
+        //System.out.println("string info: " + new String(info));
         JSONObject json = new JSONObject(new String(info));
         String table = json.getString("table");
         if (table.equals("goods")) {
@@ -85,17 +88,15 @@ public class Processor {
                 double price = infoJson.getDouble("price");
                 int id_group = infoJson.getInt("id_group");
                 db.createProduct(name, description, manufacturer, amount, price, id_group);
-            } else if (type == 1) {
-                System.out.println("DELETING");
-                JSONObject infoJson = json.getJSONObject("info");
+            } else if (type == 1) {JSONObject infoJson = json.getJSONObject("info");
                 int id = infoJson.getInt("id");
                 db.deleteByIdGood(id);
             } else if (type == 2) {
                 JSONObject infoJson = json.getJSONObject("info");
                 int id = infoJson.getInt("id");
-                String name = infoJson.getString("name").equals("") ? null : infoJson.getString("name");
-                String description = infoJson.getString("description").equals("") ? null : infoJson.getString("description");
-                String manufacturer = infoJson.getString("manufacturer").equals("") ? null : infoJson.getString("manufacturer");
+                String name = infoJson.getString("name").isEmpty() ? null : infoJson.getString("name");
+                String description = infoJson.getString("description").isEmpty() ? null : infoJson.getString("description");
+                String manufacturer = infoJson.getString("manufacturer").isEmpty() ? null : infoJson.getString("manufacturer");
                 String amount = infoJson.getInt("amount") == -1 ? null : String.valueOf(infoJson.getInt("amount"));
                 String price = infoJson.getDouble("price") == -1 ? null : String.valueOf(infoJson.getDouble("price"));
                 String id_group = infoJson.getInt("id_group") == -1 ? null : String.valueOf(infoJson.getInt("id_group"));
@@ -104,7 +105,6 @@ public class Processor {
                 List<goods> lst = db.getAllProductsList();
                 ObjectMapper mapper = new ObjectMapper();
                 String tosend = mapper.writeValueAsString(lst);
-                System.out.println(tosend);
                 return tosend;
             }
         }
@@ -129,11 +129,22 @@ public class Processor {
                 List<groups> lst = db.getAllGroups();
                 ObjectMapper mapper = new ObjectMapper();
                 String tosend = mapper.writeValueAsString(lst);
-                System.out.println(tosend);
+                //System.out.println(tosend);
                 return tosend;
             }
         }
+        else if (table.equals("hash")){
+            JSONObject infoJson = json.getJSONObject("info");
+            String name = infoJson.getString("name");
 
+            List<String> lst = db.getCreds(name);
+            if (lst == null) return null;
+
+            ObjectMapper mapper = new ObjectMapper();
+
+            return mapper.writeValueAsString(lst);
+        }
+        //System.out.println("Server stopped handling!");
         return null;
     }
 

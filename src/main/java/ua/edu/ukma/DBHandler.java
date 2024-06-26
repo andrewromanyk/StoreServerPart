@@ -7,6 +7,7 @@ import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class DBHandler {
@@ -16,30 +17,38 @@ public class DBHandler {
     private Connection conn;
     private String name = "StoreDB";
     private String createGroup = """
-            CREATE TABLE IF NOT EXISTS 'groups' (
-                'id_group' INTEGER PRIMARY KEY AUTOINCREMENT,
-                'name' VARCHAR(255) NOT NULL,
-                'description' VARCHAR(255) NOT NULL
+            CREATE TABLE IF NOT EXISTS groups (
+                id_group serial PRIMARY KEY,
+                name VARCHAR(255) NOT NULL UNIQUE,
+                description VARCHAR(255) NOT NULL
             );
             """;
 
     private String createGoods = """
-            CREATE TABLE IF NOT EXISTS 'goods' (
-                'id_good' INTEGER PRIMARY KEY AUTOINCREMENT,
-                'name' VARCHAR(255) NOT NULL,
-                'description' VARCHAR(255) NOT NULL,
-                'manufacturer' VARCHAR(255) NOT NULL,
-                'amount' INTEGER NOT NULL,
-                'price' REAL NOT NULL,
-                'id_group' INTEGER NOT NULL,
+            CREATE TABLE IF NOT EXISTS goods (
+                id_good serial PRIMARY KEY,
+                name VARCHAR(255) NOT NULL UNIQUE,
+                description VARCHAR(255) NOT NULL,
+                manufacturer VARCHAR(255) NOT NULL,
+                amount INTEGER NOT NULL,
+                price REAL NOT NULL,
+                id_group INTEGER NOT NULL,
                 FOREIGN KEY (id_group) REFERENCES groups(id_group)
+            );
+            """;
+
+    private String createPass = """
+            CREATE TABLE IF NOT EXISTS pass (
+                id_pass serial PRIMARY KEY,
+                name VARCHAR(255) NOT NULL UNIQUE,
+                hash VARCHAR(255) NOT NULL
             );
             """;
 
     public static void main(String[] args) throws SQLException, JsonProcessingException {
         DBHandler db =  new DBHandler();
         db.init();
-        System.out.println(db.getAllGroups());
+        //System.out.println(db.getAllGroups());
     }
 
     public static void printResult(ResultSet rs) throws SQLException {
@@ -66,9 +75,13 @@ public class DBHandler {
     }
 
     public void init() {
+        if (session != null) {
+            return;
+        }
         try {
-            Class.forName("org.sqlite.JDBC");
-            conn = DriverManager.getConnection("jdbc:sqlite:" + name);
+            Class.forName("org.postgresql.Driver");
+            conn = DriverManager.getConnection(
+                    "jdbc:postgresql://ep-withered-water-a2enkxp5.eu-central-1.aws.neon.tech/neondb?user=neondb_owner&password=WeVp1NZbR4jl&sslmode=require");
         }
         catch (SQLException | ClassNotFoundException e){
             System.err.println("Couldn't connect to database or load JDBC driver");
@@ -76,8 +89,10 @@ public class DBHandler {
         try {
             PreparedStatement crtGrp = conn.prepareStatement(createGroup);
             PreparedStatement crtGds = conn.prepareStatement(createGoods);
+            PreparedStatement crtPas = conn.prepareStatement(createPass);
             crtGrp.executeUpdate();
             crtGds.executeUpdate();
+            crtPas.executeUpdate();
         }
         catch (SQLException e){
             System.err.println("Couldn't create tables.");
@@ -89,7 +104,7 @@ public class DBHandler {
     //Create product
     public int createProduct(String name, String descr, String manuf, int amount, double price, int group) throws SQLException {
         PreparedStatement ps = conn.prepareStatement("""
-                                   INSERT INTO goods VALUES (null, ?, ?, ?, ?, ?, ?)
+                                   INSERT INTO goods VALUES (DEFAULT, ?, ?, ?, ?, ?, ?)
                                """);
         ps.setString(1, name);
         ps.setString(2, descr);
@@ -98,6 +113,7 @@ public class DBHandler {
         ps.setDouble(5, price);
         ps.setInt(6, group);
         ps.executeUpdate();
+        ps.getGeneratedKeys().next();
         int result = ps.getGeneratedKeys().getInt(1);
         ps.close();
         return result;
@@ -105,7 +121,7 @@ public class DBHandler {
 
     public int createGroup(String name, String descr) throws SQLException {
         PreparedStatement ps = conn.prepareStatement("""
-                                   INSERT INTO groups VALUES (null, ?, ?)
+                                   INSERT INTO groups VALUES (DEFAULT, ?, ?)
                                """);
         ps.setString(1, name);
         ps.setString(2, descr);
@@ -129,13 +145,18 @@ public class DBHandler {
         return query.getResultList();
     }
 
-    public ResultSet getCreds(String login) throws SQLException {
+    public List<String> getCreds(String login) throws SQLException {
         PreparedStatement ps = conn.prepareStatement("""
-                                                        SELECT *
-                                                        FROM login_creds
-                                                        WHERE login=?""");
-        ps.setString(1, name);
-        return ps.executeQuery();
+                                                        SELECT name, hash
+                                                        FROM pass
+                                                        WHERE name=?""");
+        ps.setString(1, login);
+        ResultSet rs = ps.executeQuery();
+        if (!rs.next()) return null;
+        List<String> lst = new ArrayList<>();
+        lst.add(rs.getString(1));
+        lst.add(rs.getString(2));
+        return lst;
     }
 
     public ResultSet getProduct(String name) throws SQLException {

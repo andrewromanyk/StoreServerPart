@@ -59,16 +59,18 @@ public class StoreServerTCP {
                 //message = new byte[1024];
                 //i = 0;
                 while ((inputLine = in.readLine()) != null) {
-                    System.out.println("Received: " + inputLine);
+                    //System.out.println("Received: " + inputLine);
                     if (inputLine.equals("ping")) {
-                        System.out.println("ping-pong");
+                        //System.out.println("ping-pong");
                         out.println("pong");
                     }
                     else {
+                        //System.out.println("Server recieved!");
                         bytes = stringToArray(inputLine);
                         byte[] result = packetHandler(bytes);
-                        System.out.println(Arrays.toString(result));
+                        //System.out.println(Arrays.toString(result));
                         sendString(Arrays.toString(result));
+                        //System.out.println("Server sent!");
                         //message[i++] = Byte.parseByte(inputLine);
                     }
                 }

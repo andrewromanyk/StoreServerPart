@@ -22,6 +22,7 @@ public class Decriptor {
 
     public byte[] decrypt() throws InterruptedException, UnknownHostException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
         message = new Message(0, 0, new byte[1]);
+        //System.out.println("Server started decrypting!");
         Thread headerThread = new Thread(() -> messageHeader(Arrays.copyOfRange(mess, 0, 8)));
         Thread messageThread = new Thread(() -> {
             try {
@@ -33,8 +34,8 @@ public class Decriptor {
         headerThread.start();
         messageThread.start();
         messageThread.join();
-
-        System.out.println("Recived message: " + Arrays.toString(message.getByteMessage()));
+        //System.out.println("Server stopped decrypting!");
+        //System.out.println("Recived message: " + Arrays.toString(message.getByteMessage()));
         Processor processor = new Processor();
         return processor.process(message);
     }

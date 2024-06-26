@@ -2,8 +2,8 @@
 <hibernate-configuration>
     <session-factory>
         <!-- Database connection settings -->
-        <property name="hibernate.connection.driver_class">org.sqlite.JDBC</property>
-        <property name="hibernate.connection.url">jdbc:sqlite:StoreDB</property>
+        <property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
+        <property name="hibernate.connection.url">jdbc:postgresql://ep-withered-water-a2enkxp5.eu-central-1.aws.neon.tech/neondb?user=neondb_owner&amp;password=WeVp1NZbR4jl&amp;sslmode=require</property>
 
         <!-- JDBC connection pool settings -->
         <property name="hibernate.c3p0.min_size">5</property>
@@ -19,7 +19,7 @@
         <!-- Drop and re-create the database schema on startup -->
         <property name="hibernate.hbm2ddl.auto">update</property>
 
-        <property name="hibernate.dialect">org.hibernate.community.dialect.SQLiteDialect</property>
+        <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
 
 
         <!-- Specify your entity classes -->
