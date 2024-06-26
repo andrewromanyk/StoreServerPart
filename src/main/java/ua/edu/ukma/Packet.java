@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.util.Arrays;
-
+import static ua.edu.ukma.Key.KEY;
 //import static java.lang.Math.pow;
 
 public class Packet {
@@ -22,19 +22,12 @@ public class Packet {
     private Message bMsq;
     private short wCrc16Mes;
 
-    private byte[] byte_key =
-            {0, -15, -9, 127,
-                    65, -77, 1, 123,
-                    -36, 12, -32, 1,
-                    44, -15, 15, 99};
-    private Key KEY = new SecretKeySpec(byte_key, "AES");
-
     public Packet(byte src, int command, byte[] message, int userid) throws IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
         bMagic = 0x13;
         bSrc = src;
         bPktId = pktidLast++;
         byte[] encrypted_message = Encryption.encrypt(message, KEY);
-        wLen = encrypted_message.length;
+        wLen = encrypted_message.length+8;
         ByteBuffer buf = ByteBuffer.allocate(14);
         buf.put(bMagic);
         buf.put(bSrc);
@@ -82,15 +75,20 @@ public class Packet {
         this.wLen = wLen;
     }
 
+
     public byte[] toByteArray() throws IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
-        byte[] message = message().toByteArray();
-        ByteBuffer buffer = ByteBuffer.allocate(18+message.length);
+        ByteBuffer buffer = ByteBuffer.allocate(18+wLen);
         buffer.put(bMagic);
         buffer.put(bSrc);
         buffer.putLong(bPktId);
         buffer.putInt(wLen);
         buffer.putShort(wCrc16);
-        buffer.put(message);
+//        System.out.println(Arrays.toString(message().toByteArray()));
+//        System.out.println("actual message size:" + message().toByteArray().length);
+//        System.out.println("overall packet size:" + (message().toByteArray().length + 18));
+//        System.out.println("buffer length:"+buffer.array().length);
+//        System.out.println("wLen:" + wLen);
+        buffer.put(message().toByteArray());
         buffer.putShort(wCrc16Mes);
         return buffer.array();
     }

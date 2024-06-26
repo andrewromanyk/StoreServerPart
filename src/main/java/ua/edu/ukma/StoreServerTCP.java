@@ -52,28 +52,37 @@ public class StoreServerTCP {
 
             //Reading
             String inputLine;
-            byte[] message = new byte[1024];
-            int i = 0;
+//            byte[] message = new byte[1024];
+//            int i = 0;aa
+            byte[] bytes = new byte[0];
             try {
-                message = new byte[1024];
-                i = 0;
+                //message = new byte[1024];
+                //i = 0;
                 while ((inputLine = in.readLine()) != null) {
                     System.out.println("Received: " + inputLine);
                     if (inputLine.equals("ping")) {
                         System.out.println("ping-pong");
-                        System.out.println(Arrays.toString("pong".getBytes()));
                         out.println("pong");
                     }
-                    else message[i++] = Byte.parseByte(inputLine);
+                    else {
+                        bytes = stringToArray(inputLine);
+                        byte[] result = packetHandler(bytes);
+                        System.out.println(Arrays.toString(result));
+                        sendString(Arrays.toString(result));
+                        //message[i++] = Byte.parseByte(inputLine);
+                    }
                 }
                 System.out.println("Message ended.");
-            } catch (IOException ioe) {
+            } catch (Exception ioe) {
                 System.out.println("Message stream stopped.");
-                try {
-                    packetHandler(message);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+//                System.out.println(Arrays.toString(bytes));
+//                try {
+//                    //System.out.println(Arrays.toString(Arrays.copyOfRange(message, 0, i)));
+//                    byte[] result = packetHandler(bytes);
+//                    sendString(Arrays.toString(result));
+//                } catch (Exception e) {
+//                    throw new RuntimeException(e);
+//                }
             }
 
             //Termination connection
@@ -85,9 +94,20 @@ public class StoreServerTCP {
                 System.out.println("Can not close input stream or stop client.");
             }
         }
-        void packetHandler(byte[] message) throws Exception {
-            byte[] resultPacket = Reciever.recievePacket(message);
-            out.println(Arrays.toString(resultPacket));
+        byte[] packetHandler(byte[] message) throws Exception {
+            return Reciever.recievePacket(message);
+        }
+        void sendString(String message) throws IOException {
+            out.println(message);
+        }
+        byte[] stringToArray(String string) {
+            String newString = string.substring(1, string.length()-1);
+            String[] array = newString.split(", ");
+            byte[] result = new byte[array.length];
+            for (int i = 0; i < array.length; i++) {
+                result[i] = Byte.parseByte(array[i]);
+            }
+            return result;
         }
     }
 }

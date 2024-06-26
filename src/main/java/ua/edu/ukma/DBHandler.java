@@ -1,5 +1,6 @@
 package ua.edu.ukma;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.persistence.criteria.*;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -35,10 +36,10 @@ public class DBHandler {
             );
             """;
 
-    public static void main(String[] args) throws SQLException {
+    public static void main(String[] args) throws SQLException, JsonProcessingException {
         DBHandler db =  new DBHandler();
         db.init();
-        db.updateByManufacturer("unknown", new String[]{null, null, "Chysto", null, null});
+        System.out.println(db.getAllGroups());
     }
 
     public static void printResult(ResultSet rs) throws SQLException {
@@ -102,10 +103,30 @@ public class DBHandler {
         return result;
     }
 
+    public int createGroup(String name, String descr) throws SQLException {
+        PreparedStatement ps = conn.prepareStatement("""
+                                   INSERT INTO groups VALUES (null, ?, ?)
+                               """);
+        ps.setString(1, name);
+        ps.setString(2, descr);
+        ps.executeUpdate();
+        int result = ps.getGeneratedKeys().getInt(1);
+        ps.close();
+        return result;
+    }
+
     //Get Product
     public ResultSet getAllProducts() throws SQLException {
         Statement ps = conn.createStatement();
         return ps.executeQuery("SELECT * FROM goods");
+    }
+
+    public List<groups> getAllGroups(){
+        CriteriaQuery<groups> cr = cb.createQuery(groups.class);
+        Root<groups> root = cr.from(groups.class);
+        cr.select(root);
+        Query<groups> query = session.createQuery(cr);
+        return query.getResultList();
     }
 
     public ResultSet getCreds(String login) throws SQLException {
@@ -135,7 +156,7 @@ public class DBHandler {
         return ps.executeQuery();
     }
 
-    private void CriteriaUpdateSetter(String[] args, CriteriaUpdate<goods> criteriaUpdate) {
+    private void CriteriaUpdateSetterGood(String[] args, CriteriaUpdate<goods> criteriaUpdate) {
         int length = args.length;
 
         if (length > 0 && args[0] != null) criteriaUpdate.set("name", args[0]);
@@ -147,10 +168,10 @@ public class DBHandler {
     }
 
     //Update product
-    private <T> int updateByHelper(String[] args, String by, T value){
+    private <T> int updateByHelperGood(String[] args, String by, T value){
         CriteriaUpdate<goods> criteriaUpdate = cb.createCriteriaUpdate(goods.class);
         Root<goods> root = criteriaUpdate.from(goods.class);
-        CriteriaUpdateSetter(args, criteriaUpdate);
+        CriteriaUpdateSetterGood(args, criteriaUpdate);
         criteriaUpdate.where(cb.equal(root.get(by), value));
 
 //        if (length > 0 && args[0] != null) criteriaUpdate.set("name", args[0]);
@@ -167,23 +188,54 @@ public class DBHandler {
     }
 
     public int updateByName(String name, String[] args){
-        return updateByHelper(args, "name", name);
+        return updateByHelperGood(args, "name", name);
     }
 
-    public int updateById(int id, String[] args){
-        return updateByHelper(args, "id_good", id);
+    public int updateByIdGood(int id, String[] args){
+        return updateByHelperGood(args, "id_good", id);
     }
 
     public int updateByGroup(int id, String[] args){
-        return updateByHelper(args, "id_group", id);
+        return updateByHelperGood(args, "id_group", id);
     }
 
     public int updateByManufacturer(String manuf, String[] args){
-        return updateByHelper(args, "manufacturer", manuf);
+        return updateByHelperGood(args, "manufacturer", manuf);
+    }
+
+    private void CriteriaUpdateSetterGroup(String[] args, CriteriaUpdate<groups> criteriaUpdate) {
+        int length = args.length;
+
+        if (length > 0 && args[0] != null) criteriaUpdate.set("name", args[0]);
+        if (length > 1 && args[1] != null) criteriaUpdate.set("description", args[1]);
+    }
+
+    //Update product
+    private <T> int updateByHelperGroup(String[] args, String by, T value){
+        CriteriaUpdate<groups> criteriaUpdate = cb.createCriteriaUpdate(groups.class);
+        Root<groups> root = criteriaUpdate.from(groups.class);
+        CriteriaUpdateSetterGroup(args, criteriaUpdate);
+        criteriaUpdate.where(cb.equal(root.get(by), value));
+
+//        if (length > 0 && args[0] != null) criteriaUpdate.set("name", args[0]);
+//        if (length > 1 && args[1] != null) criteriaUpdate.set("description", args[1]);
+//        if (length > 2 && args[2] != null) criteriaUpdate.set("manufacturer", args[2]);
+//        if (length > 3 && args[3] != null) criteriaUpdate.set("amount", Integer.parseInt(args[3]));
+//        if (length > 4 && args[4] != null) criteriaUpdate.set("price", Double.parseDouble(args[4]));
+//        if (length > 5 && args[5] != null) criteriaUpdate.set("id_group", Integer.parseInt(args[5]));
+
+        Transaction transaction = session.beginTransaction();
+        int res = session.createQuery(criteriaUpdate).executeUpdate();
+        transaction.commit();
+        return res;
+    }
+
+    public int updateByIdGroup(int id, String[] args){
+        return updateByHelperGroup(args, "id_group", id);
     }
 
     //Delete product
-    public <T> int deleteBy(String by, T value){
+    public <T> int deleteByGood(String by, T value){
         CriteriaDelete<goods> criteriaDelete = cb.createCriteriaDelete(goods.class);
         Root<goods> root = criteriaDelete.from(goods.class);
         criteriaDelete.where(cb.equal(root.get(by), value));
@@ -193,7 +245,19 @@ public class DBHandler {
         transaction.commit();
         return res;
     }
-    public <T, K> int deleteByTwo(String by, T value, String by2, K value2){
+
+    public <T> int deleteByGroup(String by, T value){
+        CriteriaDelete<groups> criteriaDelete = cb.createCriteriaDelete(groups.class);
+        Root<groups> root = criteriaDelete.from(groups.class);
+        criteriaDelete.where(cb.equal(root.get(by), value));
+
+        Transaction transaction = session.beginTransaction();
+        int res = session.createQuery(criteriaDelete).executeUpdate();
+        transaction.commit();
+        return res;
+    }
+
+    public <T, K> int deleteByTwoGood(String by, T value, String by2, K value2){
         CriteriaDelete<goods> criteriaDelete = cb.createCriteriaDelete(goods.class);
         Root<goods> root = criteriaDelete.from(goods.class);
         criteriaDelete.where(cb.and(cb.equal(root.get(by), value), cb.equal(root.get(by2), value2)));
@@ -204,25 +268,37 @@ public class DBHandler {
         return res;
     }
 
-    public int deleteById(int id){
-        return deleteBy("id_good", id);
+    public int deleteByIdGood(int id){
+        return deleteByGood("id_good", id);
     }
-    public int deleteByGroup(int id){
-        return deleteBy("id_group", id);
+    public int deleteByGroupGood(int id){
+        return deleteByGood("id_group", id);
     }
-    public int deleteByManufacturer(String manuf){
-        return deleteBy("manufacturer", manuf);
+    public int deleteByManufacturerGood(String manuf){
+        return deleteByGood("manufacturer", manuf);
     }
-    public int deleteByName(String name){
-        return deleteBy("name", name);
+    public int deleteByNameGood(String name){
+        return deleteByGood("name", name);
+    }
+    public int deleteByManufacturerAndGroupGood(String manuf, String group){
+        return deleteByTwoGood("manufacturer", manuf, "id_group", group);
     }
 
-    public int deleteByManufacturerAndGroup(String manuf, String group){
-        return deleteByTwo("manufacturer", manuf, "id_group", group);
+    public int deleteByIdGroup(int id){
+        return deleteByGroup("id_group", id);
     }
 
     //List by criteria
     //Products with amount = 0
+    public List<goods> getAllProductsList(){
+        CriteriaQuery<goods> cr = cb.createQuery(goods.class);
+        Root<goods> root = cr.from(goods.class);
+        cr.select(root);
+        Query<goods> query = session.createQuery(cr);
+        return query.getResultList();
+    }
+
+
     public List<goods> getNonexistentProducts(){
         CriteriaQuery<goods> cr = cb.createQuery(goods.class);
         Root<goods> root = cr.from(goods.class);

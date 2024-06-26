@@ -9,13 +9,9 @@ import java.security.InvalidKeyException;
 import java.security.Key;
 import java.util.Arrays;
 
+import static ua.edu.ukma.Key.KEY;
+
 public class Decriptor {
-    private static final byte[] byte_key =
-            {23, -13, 126, 12,
-                    -1, 10, 1, -122,
-                    -100, 10, 32, 1,
-                    44, 123, -123, 0};
-    private static final Key KEY = new SecretKeySpec(byte_key, "AES");
 
     private Message message;
     byte[] mess;
@@ -38,7 +34,7 @@ public class Decriptor {
         messageThread.start();
         messageThread.join();
 
-        System.out.println("Recived message: " + Arrays.toString(message.toByteArray()));
+        System.out.println("Recived message: " + Arrays.toString(message.getByteMessage()));
         Processor processor = new Processor();
         return processor.process(message);
     }
@@ -52,6 +48,6 @@ public class Decriptor {
     }
 
     private void messageBody(byte[] mess) throws IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
-        message.setbyteMessage(mess);
+        message.setbyteMessage(Encryption.decrypt(mess, KEY));
     }
 }

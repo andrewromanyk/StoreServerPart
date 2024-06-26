@@ -1,11 +1,16 @@
 package ua.edu.ukma;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONObject;
 
-import java.net.InetAddress;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
 import java.net.UnknownHostException;
-import java.sql.ResultSet;
+import java.security.InvalidKeyException;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 
 public class Processor {
 
@@ -23,21 +28,23 @@ public class Processor {
         System.out.println(jsonObject.toString());
     }
 
-    private Message result  = new Message(1, 1, new byte[]{1});
+    private Message result  = new Message(1, 1, new byte[0]);
 
-    public byte[] process(Message message) throws InterruptedException, UnknownHostException {
+    public byte[] process(Message message) throws InterruptedException, UnknownHostException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
         Thread headerThread = new Thread(() -> messageHeader(message));
-        Thread answerThread = new Thread(() -> messageBody(message));
+        Thread answerThread = new Thread(() -> {
+            try {
+                messageBody(message);
+            } catch (SQLException | JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        });
         headerThread.start();
         answerThread.start();
-
-        InetAddress filler = InetAddress.getLocalHost();
-
-        Encriptor encriptor = new Encriptor();
-
         headerThread.join();
         answerThread.join();
 
+        Encriptor encriptor = new Encriptor();
         return encriptor.encript(result);
     }
 
@@ -46,8 +53,13 @@ public class Processor {
         result.setuserId(message.userId());
     }
 
-    private void messageBody(Message message){
-        result.setbyteMessage(Encryption.encrypt("Ok".getBytes(), KEY));
+    private void messageBody(Message message) throws SQLException, JsonProcessingException {
+        String res = handleMessage(message);
+        if (res == null) result.setbyteMessage("Ok".getBytes());
+        else {
+            System.out.println(Arrays.toString(res.getBytes()));
+            result.setbyteMessage(res.getBytes());
+        }
     }
 
     // 0 - create
@@ -57,45 +69,72 @@ public class Processor {
     //Json:
     //table - table to modify
     //info - inf to use
-    private ResultSet handleMessage(Message message) throws SQLException {
+    private String handleMessage(Message message) throws SQLException, JsonProcessingException {
         int type = message.type();
         byte[] info = message.getByteMessage();
+        System.out.println("string info: " + new String(info));
         JSONObject json = new JSONObject(new String(info));
         String table = json.getString("table");
-        if (type == 0){
-            JSONObject infoJson = json.getJSONObject("info");
-            String name = infoJson.getString("name");
-            String description = infoJson.getString("description");
-            String manufacturer = infoJson.getString("manufacturer");
-            int amount = infoJson.getInt("amount");
-            double price = infoJson.getDouble("price");
-            int id_group = infoJson.getInt("id_group");
-            db.createProduct(name, description, manufacturer, amount, price, id_group);
+        if (table.equals("goods")) {
+            if (type == 0) {
+                JSONObject infoJson = json.getJSONObject("info");
+                String name = infoJson.getString("name");
+                String description = infoJson.getString("description");
+                String manufacturer = infoJson.getString("manufacturer");
+                int amount = infoJson.getInt("amount");
+                double price = infoJson.getDouble("price");
+                int id_group = infoJson.getInt("id_group");
+                db.createProduct(name, description, manufacturer, amount, price, id_group);
+            } else if (type == 1) {
+                System.out.println("DELETING");
+                JSONObject infoJson = json.getJSONObject("info");
+                int id = infoJson.getInt("id");
+                db.deleteByIdGood(id);
+            } else if (type == 2) {
+                JSONObject infoJson = json.getJSONObject("info");
+                int id = infoJson.getInt("id");
+                String name = infoJson.getString("name").equals("") ? null : infoJson.getString("name");
+                String description = infoJson.getString("description").equals("") ? null : infoJson.getString("description");
+                String manufacturer = infoJson.getString("manufacturer").equals("") ? null : infoJson.getString("manufacturer");
+                String amount = infoJson.getInt("amount") == -1 ? null : String.valueOf(infoJson.getInt("amount"));
+                String price = infoJson.getDouble("price") == -1 ? null : String.valueOf(infoJson.getDouble("price"));
+                String id_group = infoJson.getInt("id_group") == -1 ? null : String.valueOf(infoJson.getInt("id_group"));
+                db.updateByIdGood(id, new String[]{name, description, manufacturer, amount, price, id_group});
+            } else if (type == 3) {
+                List<goods> lst = db.getAllProductsList();
+                ObjectMapper mapper = new ObjectMapper();
+                String tosend = mapper.writeValueAsString(lst);
+                System.out.println(tosend);
+                return tosend;
+            }
         }
-        else if(type == 1){
-            JSONObject infoJson = json.getJSONObject("info");
-            int id = infoJson.getInt("id");
-            db.deleteById(id);
+        else if (table.equals("group")){
+            if (type == 0) {
+                JSONObject infoJson = json.getJSONObject("info");
+                String name = infoJson.getString("name");
+                String description = infoJson.getString("description");
+                db.createGroup(name, description);
+            } else if (type == 1) {
+                JSONObject infoJson = json.getJSONObject("info");
+                int id = infoJson.getInt("id");
+                db.deleteByGroupGood(id);
+                db.deleteByIdGroup(id);
+            } else if (type == 2) {
+                JSONObject infoJson = json.getJSONObject("info");
+                int id = infoJson.getInt("id");
+                String name = infoJson.getString("name").isEmpty() ? null : infoJson.getString("name");
+                String description = infoJson.getString("description").isEmpty() ? null : infoJson.getString("description");
+                db.updateByIdGroup(id, new String[]{name, description});
+            } else if (type == 3) {
+                List<groups> lst = db.getAllGroups();
+                ObjectMapper mapper = new ObjectMapper();
+                String tosend = mapper.writeValueAsString(lst);
+                System.out.println(tosend);
+                return tosend;
+            }
         }
-        else if(type == 2){
-            JSONObject infoJson = json.getJSONObject("info");
-            int id = infoJson.getInt("id");
-            String name = infoJson.getString("name").equals("") ? null : infoJson.getString("name");
-            String description = infoJson.getString("description").equals("") ? null : infoJson.getString("description");
-            String manufacturer = infoJson.getString("manufacturer").equals("") ? null : infoJson.getString("manufacturer");
-            String amount = infoJson.getInt("amount") == -1 ? null : String.valueOf(infoJson.getInt("amount"));
-            String price = infoJson.getDouble("price") == -1 ? null : String.valueOf(infoJson.getDouble("price"));
-            String id_group = infoJson.getInt("id_group") == -1 ? null : String.valueOf(infoJson.getDouble("price"));
-            db.updateById(id, new String[]{name, description, manufacturer, amount, price, id_group});
-        }
-        else if(type == 3){
-            JSONObject infoJson = json.getJSONObject("info");
-            String name = infoJson.getString("name");
-            ResultSet lst = db.getProduct(name);
-            return lst;
-        }
-        ResultSet set = null;
-        return set;
+
+        return null;
     }
 
 }

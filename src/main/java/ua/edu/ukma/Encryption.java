@@ -11,6 +11,7 @@ import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import static ua.edu.ukma.Key.KEY;
 
 public class Encryption {
     static Cipher cipher;
@@ -24,13 +25,6 @@ public class Encryption {
     }
 
     public static void main(String[] args) throws IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
-        byte[] byte_key =
-                {23, -13, 126, 12,
-                        -1, 10, 1, -122,
-                        -100, 10, 32, 1,
-                        44, 123, -123, 0};
-        Key KEY = new SecretKeySpec(byte_key, "AES");
-
         byte[] message = {1, 2, 3, 4, 6, 10, -3, 11, 1, 1, 1, 1, 1, 1, 1, 1};
         byte[] encripted = encrypt(message, KEY);
         System.out.println("Size: " + message.length);

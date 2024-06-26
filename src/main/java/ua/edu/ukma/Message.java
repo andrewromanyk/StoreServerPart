@@ -7,18 +7,12 @@ import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.util.Arrays;
+import static ua.edu.ukma.Key.KEY;
 
 public class Message {
     private int cType;
     private int bUserId;
     private byte[] message;
-
-    private byte[] byte_key =
-            {0, -15, -9, 127,
-                    65, -77, 1, 123,
-                    -36, 12, -32, 1,
-                    44, -15, 15, 99};
-    private Key KEY = new SecretKeySpec(byte_key, "AES");
 
     public Message(int type, int id, byte[] mess){
         cType = type;
@@ -41,7 +35,7 @@ public class Message {
 
     public void settype(int type) { cType = type;}
     public void setuserId(int id) { bUserId = id;}
-    public void setbyteMessage(byte[] mess) { message = Arrays.copyOf(mess, message.length);}
+    public void setbyteMessage(byte[] mess) { message = Arrays.copyOf(mess, mess.length);}
 
 /*    public byte[] toByteArray() throws IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
         byte[] encryptedMessage = encrypt(message, KEY);
