@@ -57,17 +57,19 @@ public class Processor {
     }
 
     private void messageBody(Message message) throws SQLException, JsonProcessingException {
-        String res;
+        String res = null;
         try {
             res = handleMessage(message);
         }
         catch (Exception e) {
-            res = null;
+            res = "Bad";
         }
-        if (res == null) result.setbyteMessage("Ok".getBytes());
-        else {
-            //System.out.println(Arrays.toString(res.getBytes()));
-            result.setbyteMessage(res.getBytes());
+        finally {
+            if (res == null) result.setbyteMessage("Ok".getBytes());
+            else {
+                //System.out.println(Arrays.toString(res.getBytes()));
+                result.setbyteMessage(res.getBytes());
+            }
         }
     }
 

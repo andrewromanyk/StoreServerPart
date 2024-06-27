@@ -119,7 +119,7 @@ public class DBHandler {
     public int createProduct(String name, String descr, String manuf, int amount, double price, int group) throws SQLException {
         PreparedStatement ps = conn.prepareStatement("""
                                    INSERT INTO goods VALUES (DEFAULT, ?, ?, ?, ?, ?, ?)
-                               """);
+                               """, Statement.RETURN_GENERATED_KEYS);
         ps.setString(1, name);
         ps.setString(2, descr);
         ps.setString(3, manuf);
@@ -127,8 +127,10 @@ public class DBHandler {
         ps.setDouble(5, price);
         ps.setInt(6, group);
         ps.executeUpdate();
-        ps.getGeneratedKeys().next();
-        int result = ps.getGeneratedKeys().getInt(1);
+        ResultSet rs = ps.getGeneratedKeys();
+        rs.next();
+        int result = rs.getInt(1);
+        System.out.println("Result:" + result);
         ps.close();
         return result;
     }
@@ -140,7 +142,9 @@ public class DBHandler {
         ps.setString(1, name);
         ps.setString(2, descr);
         ps.executeUpdate();
-        int result = ps.getGeneratedKeys().getInt(1);
+        ResultSet rs = ps.getGeneratedKeys();
+        rs.next();
+        int result = rs.getInt(1);
         System.out.println("Result:" + result);
         ps.close();
         return result;
@@ -218,8 +222,13 @@ public class DBHandler {
 //        if (length > 5 && args[5] != null) criteriaUpdate.set("id_group", Integer.parseInt(args[5]));
 
         Transaction transaction = session.beginTransaction();
-        int res = session.createQuery(criteriaUpdate).executeUpdate();
-        transaction.commit();
+        int res = 0;
+        try {
+            res = session.createQuery(criteriaUpdate).executeUpdate();
+        }
+        finally {
+            transaction.commit();
+        }
         return res;
     }
 
@@ -261,8 +270,13 @@ public class DBHandler {
 //        if (length > 5 && args[5] != null) criteriaUpdate.set("id_group", Integer.parseInt(args[5]));
 
         Transaction transaction = session.beginTransaction();
-        int res = session.createQuery(criteriaUpdate).executeUpdate();
-        transaction.commit();
+        int res = 0;
+        try {
+            res = session.createQuery(criteriaUpdate).executeUpdate();
+        }
+        finally {
+            transaction.commit();
+        }
         return res;
     }
 
