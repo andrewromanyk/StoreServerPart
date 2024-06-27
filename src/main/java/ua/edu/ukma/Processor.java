@@ -30,7 +30,7 @@ public class Processor {
 
     private Message result  = new Message(1, 1, new byte[0]);
 
-    public byte[] process(Message message) throws InterruptedException, UnknownHostException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
+    public byte[] process(Message message) throws InterruptedException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, SQLException {
         //System.out.println("Server started processing!");
         Thread headerThread = new Thread(() -> messageHeader(message));
         Thread answerThread = new Thread(() -> {
@@ -46,6 +46,7 @@ public class Processor {
         answerThread.join();
 
         Encriptor encriptor = new Encriptor();
+
         //System.out.println("Server stopped processing!");
         return encriptor.encript(result);
     }
@@ -56,7 +57,13 @@ public class Processor {
     }
 
     private void messageBody(Message message) throws SQLException, JsonProcessingException {
-        String res = handleMessage(message);
+        String res;
+        try {
+            res = handleMessage(message);
+        }
+        catch (Exception e) {
+            res = null;
+        }
         if (res == null) result.setbyteMessage("Ok".getBytes());
         else {
             //System.out.println(Arrays.toString(res.getBytes()));
@@ -124,6 +131,7 @@ public class Processor {
                 int id = infoJson.getInt("id");
                 String name = infoJson.getString("name").isEmpty() ? null : infoJson.getString("name");
                 String description = infoJson.getString("description").isEmpty() ? null : infoJson.getString("description");
+                System.out.println("Description");
                 db.updateByIdGroup(id, new String[]{name, description});
             } else if (type == 3) {
                 List<groups> lst = db.getAllGroups();
@@ -143,6 +151,11 @@ public class Processor {
             ObjectMapper mapper = new ObjectMapper();
 
             return mapper.writeValueAsString(lst);
+        }
+
+        if (type == 2) {
+            db.stopConnection();
+            db.init();
         }
         //System.out.println("Server stopped handling!");
         return null;

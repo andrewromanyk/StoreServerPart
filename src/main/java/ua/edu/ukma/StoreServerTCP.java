@@ -10,7 +10,7 @@ public class StoreServerTCP {
 
     public static void main(String[] args) throws IOException {
         StoreServerTCP server = new StoreServerTCP();
-        server.start(5454);
+        server.start(5000);
     }
 
     public void start(int port) throws IOException {

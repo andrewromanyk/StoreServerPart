@@ -6,13 +6,8 @@ import java.util.Arrays;
 public class CRC16 {
 
     public static void main(String[] args) {
-        byte[] message = {0, 0, 0, 99,
-                0, 0, 1, (byte) 179,
-                -33, 83, -74, -18, -92, -30, 39, 86, -25, -57, 126, -95, -13, 68, 41, 15};
+        byte[] message = {0};
         System.out.println(CRC(message));
-        ByteBuffer buffer = ByteBuffer.allocate(10);
-        buffer.putShort(CRC(message));
-        System.out.println(Arrays.toString(buffer.array()));
     }
 
     static int[] table = {

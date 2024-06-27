@@ -1,6 +1,8 @@
 package ua.edu.ukma;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.criteria.*;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -14,7 +16,8 @@ public class DBHandler {
     Session session;
     CriteriaBuilder cb;
 
-    private Connection conn;
+
+    Connection conn;
     private String name = "StoreDB";
     private String createGroup = """
             CREATE TABLE IF NOT EXISTS groups (
@@ -75,13 +78,16 @@ public class DBHandler {
     }
 
     public void init() {
-        if (session != null) {
+        if (conn != null) {
             return;
         }
         try {
             Class.forName("org.postgresql.Driver");
             conn = DriverManager.getConnection(
                     "jdbc:postgresql://ep-withered-water-a2enkxp5.eu-central-1.aws.neon.tech/neondb?user=neondb_owner&password=WeVp1NZbR4jl&sslmode=require");
+            conn.setAutoCommit(true);
+            conn.setTransactionIsolation(Connection.TRANSACTION_NONE);
+
         }
         catch (SQLException | ClassNotFoundException e){
             System.err.println("Couldn't connect to database or load JDBC driver");
@@ -99,6 +105,14 @@ public class DBHandler {
         }
         session = HibernateUtil.getHibernateSession();
         cb = session.getCriteriaBuilder();
+    }
+
+    public void stopConnection() throws SQLException {
+        session.close();
+        session = null;
+        conn.close();
+        conn = null;
+        cb = null;
     }
 
     //Create product
@@ -122,11 +136,12 @@ public class DBHandler {
     public int createGroup(String name, String descr) throws SQLException {
         PreparedStatement ps = conn.prepareStatement("""
                                    INSERT INTO groups VALUES (DEFAULT, ?, ?)
-                               """);
+                               """, Statement.RETURN_GENERATED_KEYS);
         ps.setString(1, name);
         ps.setString(2, descr);
         ps.executeUpdate();
         int result = ps.getGeneratedKeys().getInt(1);
+        System.out.println("Result:" + result);
         ps.close();
         return result;
     }

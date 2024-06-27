@@ -7,6 +7,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.Key;
+import java.sql.SQLException;
 import java.util.Arrays;
 
 import static ua.edu.ukma.Key.KEY;
@@ -20,7 +21,7 @@ public class Decriptor {
         mess = message;
     }
 
-    public byte[] decrypt() throws InterruptedException, UnknownHostException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
+    public byte[] decrypt() throws InterruptedException, UnknownHostException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, SQLException {
         message = new Message(0, 0, new byte[1]);
         //System.out.println("Server started decrypting!");
         Thread headerThread = new Thread(() -> messageHeader(Arrays.copyOfRange(mess, 0, 8)));
