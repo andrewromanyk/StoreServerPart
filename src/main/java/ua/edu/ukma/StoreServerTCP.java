@@ -38,6 +38,7 @@ public class StoreServerTCP {
                 System.out.println("Trying to establish connection...");
                 out = new PrintWriter(clientSocket.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                System.out.println("Connection established with: " + clientSocket.getRemoteSocketAddress());
             } catch (IOException ioe) {
                 System.out.println("Can not connect. Trying again...");
                 new EchoClientHandler(clientSocket).start();
@@ -92,6 +93,7 @@ public class StoreServerTCP {
                 in.close();
                 out.close();
                 clientSocket.close();
+                interrupt();
             } catch (IOException ioe) {
                 System.out.println("Can not close input stream or stop client.");
             }
