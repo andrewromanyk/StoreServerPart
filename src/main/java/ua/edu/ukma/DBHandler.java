@@ -77,17 +77,17 @@ public class DBHandler {
         System.out.print("]");
     }
 
-    public void init() {
+    public void init() throws SQLException {
         if (conn != null) {
-            return;
+            if (!conn.isClosed()) return;
         }
         try {
             Class.forName("org.postgresql.Driver");
+            session = HibernateUtil.getHibernateSession();
+            cb = session.getCriteriaBuilder();
             conn = DriverManager.getConnection(
                     "jdbc:postgresql://ep-withered-water-a2enkxp5.eu-central-1.aws.neon.tech/neondb?user=neondb_owner&password=WeVp1NZbR4jl&sslmode=require");
             conn.setAutoCommit(true);
-            conn.setTransactionIsolation(Connection.TRANSACTION_NONE);
-
         }
         catch (SQLException | ClassNotFoundException e){
             System.err.println("Couldn't connect to database or load JDBC driver");
@@ -103,8 +103,7 @@ public class DBHandler {
         catch (SQLException e){
             System.err.println("Couldn't create tables.");
         }
-        session = HibernateUtil.getHibernateSession();
-        cb = session.getCriteriaBuilder();
+        System.out.println(conn.getNetworkTimeout());
     }
 
     public void stopConnection() throws SQLException {
@@ -175,7 +174,6 @@ public class DBHandler {
         List<String> lst = new ArrayList<>();
         lst.add(rs.getString(1));
         lst.add(rs.getString(2));
-        System.out.println(lst.get(0) + " + " + lst.get(1));
         return lst;
     }
 

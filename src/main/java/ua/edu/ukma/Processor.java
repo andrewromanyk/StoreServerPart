@@ -16,7 +16,7 @@ public class Processor {
 
     private static DBHandler db = new DBHandler();
 
-    public Processor() {
+    public Processor() throws SQLException {
         db.init();
     }
 

@@ -4,15 +4,12 @@
         <property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
         <property name="hibernate.connection.url">jdbc:postgresql://ep-withered-water-a2enkxp5.eu-central-1.aws.neon.tech/neondb?user=neondb_owner&amp;password=WeVp1NZbR4jl&amp;sslmode=require</property>
 
-        <property name="hibernate.cache.use_query_cache">false</property>
-        <property name="hibernate.cache.use_second_level_cache">false</property>
-        <property name="hibernate.c3p0.min_size">1</property>
-        <property name="hibernate.c3p0.max_size">20</property>
-        <property name="hibernate.c3p0.idle_test_period">300</property>
-
-
-        <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
-
+        <property name="hibernate.c3p0.acquire_increment">1</property>
+        <property name="hibernate.c3p0.idle_test_period">100</property>
+        <property name="hibernate.c3p0.max_size">100</property>
+        <property name="hibernate.c3p0.max_statements">100</property>
+        <property name="hibernate.c3p0.min_size">10</property>
+        <property name="hibernate.c3p0.timeout">180</property>
 
         <mapping class="ua.edu.ukma.goods"/>
         <mapping class="ua.edu.ukma.groups"/>
