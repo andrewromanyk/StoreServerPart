@@ -175,6 +175,7 @@ public class DBHandler {
         List<String> lst = new ArrayList<>();
         lst.add(rs.getString(1));
         lst.add(rs.getString(2));
+        System.out.println(lst.get(0) + " + " + lst.get(1));
         return lst;
     }
 
